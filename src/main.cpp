@@ -36,7 +36,7 @@ void setup()
     delay(500);
 }
 
-int toggleMic()
+void toggleMic()
 {
     bleKeyboard.press(KEY_LEFT_ALT);
     bleKeyboard.write('a');
