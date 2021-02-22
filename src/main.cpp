@@ -4,18 +4,20 @@
 #include <BleKeyboard.h>
 
 
-#define BRIGHTNESS 20
-
 BleKeyboard bleKeyboard;
 
-#define ZOOM 1
-#define HANGOUTS 2
-#define CZOOM 0x0000ff
-// FIXME: why 0x00ff00 gives red? is it GRB?
-#define CHANGOUTS 0xff0000
+#define ZOOM_MODE 1
+#define HANGOUTS_MODE 2
 
-int mode;
-int color;
+#define HANGOUTS
+
+#if defined(ZOOM)
+    int color = 0x0000ff;
+#elif defined(HANGOUTS)
+    int color = 0xff0000;  // FIXME: why 0x00ff00 gives red? is it GRB?
+#endif
+
+const int BRIGHTNESS = 20;
 
 
 void fill(int color)
@@ -40,15 +42,6 @@ void setup()
     M5.begin(true, false, true);
     M5.dis.setBrightness(BRIGHTNESS);
 
-    if (M5.Btn.isPressed()) {
-        mode = HANGOUTS;
-        color = CHANGOUTS;
-    }
-    else {
-        mode = ZOOM;
-        color = CZOOM;
-    }
-
     bleKeyboard.begin();
     waitForConnection();
 
@@ -58,18 +51,17 @@ void setup()
 
 void toggleMic()
 {
-    if (mode == HANGOUTS) {
-        bleKeyboard.press(KEY_LEFT_CTRL);
-        bleKeyboard.write('d');
-        delay(10);
-        bleKeyboard.release(KEY_LEFT_CTRL);
-    }
-    else {
-        bleKeyboard.press(KEY_LEFT_ALT);
-        bleKeyboard.write('a');
-        delay(10);
-        bleKeyboard.release(KEY_LEFT_ALT);
-    }
+#if defined(ZOOM)
+    bleKeyboard.press(KEY_LEFT_ALT);
+    bleKeyboard.write('a');
+    delay(10);
+    bleKeyboard.release(KEY_LEFT_ALT);
+#elif defined(HANGOUTS)
+    bleKeyboard.press(KEY_LEFT_CTRL);
+    bleKeyboard.write('d');
+    delay(10);
+    bleKeyboard.release(KEY_LEFT_CTRL);
+#endif
 }
 
 void loop()
