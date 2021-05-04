@@ -1,29 +1,33 @@
 // vim:ft=arduino
 
 #include "M5Atom.h"
+#include "ButtonKing.h"
 #include <BleKeyboard.h>
 
 
 BleKeyboard bleKeyboard;
 
-#define ZOOM_MODE 1
-#define HANGOUTS_MODE 2
-
-#define HANGOUTS
-
-#if defined(ZOOM)
-    int color = 0x0000ff;
-#elif defined(HANGOUTS)
-    int color = 0xff0000;  // FIXME: why 0x00ff00 gives red? is it GRB?
-#endif
+// FIXME: why 0x00ff00 gives red? is it GRB?
+int micColor = 0xff0000;
+int camColor = 0xffff00;
 
 const int BRIGHTNESS = 20;
+
+ButtonKing button(39, true);
 
 
 void fill(int color)
 {
     for (int pos = 0; pos < 25; pos++) {
         M5.dis.drawpix(pos, color);
+    }
+}
+
+void fadeOut()
+{
+    for (int b = BRIGHTNESS; b > 0; b--) {
+        M5.dis.setBrightness(b);
+        delay(5);
     }
 }
 
@@ -37,6 +41,46 @@ void waitForConnection()
     }
 }
 
+/* toggle mic */
+void onClick()
+{
+    bleKeyboard.press(KEY_LEFT_CTRL);
+    bleKeyboard.write('d');
+    delay(10);
+    bleKeyboard.release(KEY_LEFT_CTRL);
+    /* fill(micColor); */
+    /* fadeOut(); */
+}
+
+/* switch workspace back and forth */
+void onDoubleClick()
+{
+    bleKeyboard.press(KEY_LEFT_GUI);
+    bleKeyboard.write(KEY_ESC);
+    delay(10);
+    bleKeyboard.release(KEY_LEFT_GUI);
+}
+
+/* switch to workspace 1 */
+void onTripleClick()
+{
+    bleKeyboard.press(KEY_LEFT_GUI);
+    bleKeyboard.write('1');
+    delay(10);
+    bleKeyboard.release(KEY_LEFT_GUI);
+}
+
+/* toggle cam */
+void onRelease()
+{
+    bleKeyboard.press(KEY_LEFT_CTRL);
+    bleKeyboard.write('e');
+    delay(10);
+    bleKeyboard.release(KEY_LEFT_CTRL);
+    /* fill(camColor); */
+    /* fadeOut(); */
+}
+
 void setup()
 {
     M5.begin(true, false, true);
@@ -45,35 +89,19 @@ void setup()
     bleKeyboard.begin();
     waitForConnection();
 
-    fill(color);
-    delay(500);
-}
+    button.setClick(onClick);
+    button.setDoubleClick(onDoubleClick);
+    button.setTripleClick(onTripleClick);
+    button.setRelease(onRelease);
 
-void toggleMic()
-{
-#if defined(ZOOM)
-    bleKeyboard.press(KEY_LEFT_ALT);
-    bleKeyboard.write('a');
-    delay(10);
-    bleKeyboard.release(KEY_LEFT_ALT);
-#elif defined(HANGOUTS)
-    bleKeyboard.press(KEY_LEFT_CTRL);
-    bleKeyboard.write('d');
-    delay(10);
-    bleKeyboard.release(KEY_LEFT_CTRL);
-#endif
+    fill(micColor);
+    delay(100);
+    fadeOut();
 }
 
 void loop()
 {
-    if (M5.Btn.wasPressed()) {
-        toggleMic();
-        fill(color);
-
-        for (int b = BRIGHTNESS; b > 0; b--) {
-            M5.dis.setBrightness(b);
-            delay(2 * BRIGHTNESS - b);
-        }
-    }
-    M5.update();
+    button.isClick();
+    /* M5.update(); */
+    delay(10);
 }
